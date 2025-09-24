@@ -15,19 +15,41 @@ export class SyncService {
     const {
       createNewPlaylist = false,
       updateExisting = true,
-      skipExisting = false
+      skipExisting = false,
+      selectedSongIds = null
     } = options;
 
     try {
-      // Get Spotify playlist details
-      const spotifyPlaylist = await this.spotifyAPI.getPlaylist(spotifyPlaylistId);
-      if (!spotifyPlaylist) {
-        throw new Error('Spotify playlist not found');
+      // Handle "liked_songs" special case
+      let spotifyPlaylist;
+      if (spotifyPlaylistId === 'liked_songs') {
+        // Create a virtual playlist object for liked songs
+        spotifyPlaylist = {
+          id: 'liked_songs',
+          name: 'Liked Songs',
+          description: 'Your saved tracks from Spotify',
+          public: false,
+          collaborative: false,
+          owner: { display_name: 'You' }
+        };
+      } else {
+        // Get regular Spotify playlist details
+        spotifyPlaylist = await this.spotifyAPI.getPlaylist(spotifyPlaylistId);
+        if (!spotifyPlaylist) {
+          throw new Error('Spotify playlist not found');
+        }
       }
 
       // Get all tracks from Spotify playlist
-      const spotifyTracks = await this.spotifyAPI.getAllPlaylistTracks(spotifyPlaylistId);
+      let spotifyTracks = await this.spotifyAPI.getAllPlaylistTracks(spotifyPlaylistId);
       console.log(`Found ${spotifyTracks.length} tracks in Spotify playlist`);
+      
+      // Filter tracks if selectedSongIds is provided
+      if (selectedSongIds && selectedSongIds.length > 0) {
+        const selectedSet = new Set(selectedSongIds);
+        spotifyTracks = spotifyTracks.filter(track => selectedSet.has(track.track.id));
+        console.log(`Filtered to ${spotifyTracks.length} selected tracks`);
+      }
 
       // Find or create YouTube playlist
       let youtubePlaylist = await getYouTubePlaylistBySpotifyId(spotifyPlaylistId);
@@ -251,11 +273,13 @@ export class SyncService {
   }
 }
 
-export async function syncPlaylist(spotifyAPI, youtubeAPI, spotifyPlaylist, userId, syncHistoryId) {
+export async function syncPlaylist(spotifyAPI, youtubeAPI, spotifyPlaylist, userId, syncHistoryId, selectedSongIds = null) {
   const syncService = new SyncService(spotifyAPI, youtubeAPI, userId);
 
   try {
-    const result = await syncService.syncPlaylist(spotifyPlaylist.id);
+    const result = await syncService.syncPlaylist(spotifyPlaylist.id, {
+      selectedSongIds
+    });
 
     // Update sync history if provided
     if (syncHistoryId) {

@@ -5,7 +5,7 @@ import { PlaylistList } from '../components/playlists/playlist-list.js';
 import { SyncStatus } from '../components/sync/sync-status.js';
 import { Button } from '../components/ui/button.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card.js';
-import { Settings, LogOut, RefreshCw } from 'lucide-react';
+import { Settings, LogOut, RefreshCw, Heart } from 'lucide-react';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -14,7 +14,6 @@ export default function Home() {
   const [playlists, setPlaylists] = useState([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(true);
   const [syncHistory, setSyncHistory] = useState([]);
-  const [selectedPlaylists, setSelectedPlaylists] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -47,6 +46,17 @@ export default function Home() {
       if (response.ok) {
         const data = await response.json();
         setPlaylists(data.playlists);
+      } else {
+        const errorData = await response.json();
+        
+        // Handle scope issues specifically
+        if (errorData.requiresReauth && errorData.missingScope) {
+          setError(`${errorData.message} Missing permission: ${errorData.missingScope}`);
+          // Optionally disconnect Spotify to force re-auth
+          setSpotifyConnected(false);
+        } else {
+          setError(errorData.message);
+        }
       }
     } catch (error) {
       console.error('Error loading playlists:', error);
@@ -66,15 +76,22 @@ export default function Home() {
     }
   };
 
-  const handleSync = async (playlistId) => {
+  const handleSync = async (playlistId, selectedSongIds = null) => {
     try {
       setError(null);
+      const requestBody = { playlistId };
+      
+      // Add selected songs if provided (for individual song selection)
+      if (selectedSongIds && selectedSongIds.length > 0) {
+        requestBody.selectedSongIds = selectedSongIds;
+      }
+      
       const response = await fetch('/api/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ playlistId }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -83,7 +100,10 @@ export default function Home() {
       }
 
       const result = await response.json();
-      alert(`Sync completed! ${result.result.songsSynced} songs synced.`);
+      const syncedCount = result.result.songsSynced;
+      const totalCount = selectedSongIds ? selectedSongIds.length : 'all';
+      
+      alert(`Sync completed! ${syncedCount} of ${totalCount} songs synced successfully.`);
 
       // Refresh data
       loadPlaylists();
@@ -95,47 +115,6 @@ export default function Home() {
     }
   };
 
-  const handlePlaylistSelect = (playlistId) => {
-    setSelectedPlaylists(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(playlistId)) {
-        newSet.delete(playlistId);
-      } else {
-        newSet.add(playlistId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleBulkSync = async () => {
-    if (selectedPlaylists.size === 0) {
-      alert('Please select at least one playlist to sync');
-      return;
-    }
-
-    try {
-      setError(null);
-      let successCount = 0;
-      let errorCount = 0;
-
-      for (const playlistId of selectedPlaylists) {
-        try {
-          await handleSync(playlistId);
-          successCount++;
-        } catch (error) {
-          console.error(`Error syncing playlist ${playlistId}:`, error);
-          errorCount++;
-        }
-      }
-
-      alert(`Bulk sync completed! ${successCount} successful, ${errorCount} failed.`);
-      setSelectedPlaylists(new Set());
-
-    } catch (error) {
-      console.error('Error in bulk sync:', error);
-      setError('Bulk sync failed: ' + error.message);
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -244,7 +223,7 @@ export default function Home() {
           <div className="space-y-8">
             {/* Quick Actions */}
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-              <h2 className="text-3xl font-bold text-white neon-text-subtle">Your Playlists</h2>
+              <h2 className="text-3xl font-bold text-white neon-text-subtle">Your Music</h2>
               <div className="flex gap-3">
                 <Button
                   variant="outline"
@@ -254,25 +233,35 @@ export default function Home() {
                   <RefreshCw className="w-4 h-4" />
                   Refresh
                 </Button>
-                {selectedPlaylists.size > 0 && (
-                  <Button
-                    onClick={handleBulkSync}
-                    className="sync-button text-black font-semibold px-6"
-                  >
-                    Sync Selected ({selectedPlaylists.size})
-                  </Button>
-                )}
               </div>
             </div>
 
-            {/* Playlist List */}
-            <PlaylistList
-              playlists={playlists}
-              onSync={handleSync}
-              onPlaylistSelect={handlePlaylistSelect}
-              selectedPlaylists={selectedPlaylists}
-              isLoading={playlistsLoading}
-            />
+            {/* Liked Songs Section */}
+            {playlists.some(p => p.id === 'liked_songs') && (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-white neon-text-subtle flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-red-400 fill-current" />
+                  Your Liked Songs
+                </h3>
+                <PlaylistList
+                  playlists={playlists.filter(p => p.id === 'liked_songs')}
+                  onSync={handleSync}
+                  isLoading={playlistsLoading}
+                />
+              </div>
+            )}
+
+            {/* Regular Playlists Section */}
+            {playlists.filter(p => p.id !== 'liked_songs').length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-white neon-text-subtle">Your Playlists</h3>
+                <PlaylistList
+                  playlists={playlists.filter(p => p.id !== 'liked_songs')}
+                  onSync={handleSync}
+                  isLoading={playlistsLoading}
+                />
+              </div>
+            )}
 
             {/* Sync History */}
             <SyncStatus

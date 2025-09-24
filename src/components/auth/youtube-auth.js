@@ -9,10 +9,18 @@ export function YouTubeAuth({ onAuthSuccess, isConnected = false, spotifyConnect
     setIsLoading(true);
     try {
       const response = await fetch("/api/auth/youtube/url");
-      const { authUrl } = await response.json();
-      window.location.href = authUrl;
+      const data = await response.json();
+      
+      if (!response.ok) {
+        alert(data.message || 'Error connecting to YouTube');
+        setIsLoading(false);
+        return;
+      }
+      
+      window.location.href = data.authUrl;
     } catch (error) {
       console.error("Error initiating YouTube auth:", error);
+      alert('Error connecting to YouTube. Please try again.');
       setIsLoading(false);
     }
   };

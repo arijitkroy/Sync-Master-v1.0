@@ -37,6 +37,9 @@ async function handler(req, res) {
       return res.status(404).json({ message: 'Spotify playlist not found' });
     }
 
+    // Handle "Liked Songs" special case
+    const isLikedSongs = playlistId === 'liked_songs';
+
     // Check if YouTube playlist exists
     const youtubePlaylist = await getYouTubePlaylistBySpotifyId(playlistId);
     

@@ -10,6 +10,20 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Check if user has Spotify connected first (enforced workflow)
+    const { getSession } = await import('../../../../lib/session.js');
+    const { getAuthToken } = await import('../../../../lib/database.js');
+    
+    const session = await getSession(req, res);
+    if (session?.userId) {
+      const spotifyToken = await getAuthToken(session.userId, 'spotify');
+      if (!spotifyToken) {
+        return res.status(400).json({ 
+          message: 'Please connect Spotify first before connecting YouTube' 
+        });
+      }
+    }
+
     const { google } = require('googleapis');
     const oauth2Client = new google.auth.OAuth2(
       process.env.YOUTUBE_CLIENT_ID,

@@ -39,6 +39,48 @@ class SpotifyAPI {
     }
   }
 
+  async getUserSavedTracks(limit = 50, offset = 0) {
+    try {
+      const response = await this.client.get('/me/tracks', {
+        params: {
+          limit,
+          offset,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching Spotify saved tracks:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  async getAllUserSavedTracks() {
+    try {
+      let allTracks = [];
+      let offset = 0;
+      const limit = 50;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await this.getUserSavedTracks(limit, offset);
+        allTracks = allTracks.concat(response.items);
+        
+        hasMore = response.items.length === limit;
+        offset += limit;
+        
+        // Add a small delay to avoid rate limiting
+        if (hasMore) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+
+      return allTracks;
+    } catch (error) {
+      console.error('Error fetching all saved tracks:', error);
+      throw error;
+    }
+  }
+
   async getPlaylist(playlistId) {
     try {
       const response = await this.client.get(`/playlists/${playlistId}`);
@@ -66,6 +108,11 @@ class SpotifyAPI {
   }
 
   async getAllPlaylistTracks(playlistId) {
+    // Handle "Liked Songs" special case
+    if (playlistId === 'liked_songs') {
+      return await this.getAllUserSavedTracks();
+    }
+
     let allTracks = [];
     let offset = 0;
     const limit = 100;

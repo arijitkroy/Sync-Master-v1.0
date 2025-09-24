@@ -4,7 +4,8 @@ const SPOTIFY_SCOPES = [
   'playlist-modify-public',
   'playlist-modify-private',
   'user-read-private',
-  'user-read-email'
+  'user-read-email',
+  'user-library-read'
 ];
 
 export default async function handler(req, res) {

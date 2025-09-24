@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { useState } from "react";
-import { CheckCircle, XCircle, Clock, RefreshCw, AlertCircle } from "lucide-react";
+import { CheckCircle, XCircle, Clock, RefreshCw, AlertCircle, List, Music } from "lucide-react";
 
 export function SyncStatus({ syncHistory, onRefresh }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -108,14 +108,25 @@ export function SyncStatus({ syncHistory, onRefresh }) {
                 <div className="flex items-start gap-3">
                   {getStatusIcon(sync.status)}
                   <div className="flex-1">
-                    <h4 className="font-medium mb-1">{sync.playlist_name}</h4>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-medium">{sync.playlist_name}</h4>
+                      {sync.sync_type === 'selective' && (
+                        <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
+                          <List className="w-3 h-3" />
+                          Selective
+                        </div>
+                      )}
+                      {sync.sync_type === 'full' && (
+                        <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                          <Music className="w-3 h-3" />
+                          Full Sync
+                        </div>
+                      )}
+                    </div>
                     <p className="text-sm opacity-75 mb-2">
-                      {sync.spotify_playlist_name} → {sync.youtube_playlist_name}
+                      {sync.spotify_playlist_name} → {sync.youtube_playlist_name || 'YouTube Music'}
                     </p>
                     <div className="flex items-center gap-4 text-xs opacity-60">
-                      <span>
-                        Started: {new Date(sync.started_at).toLocaleString()}
-                      </span>
                       {sync.completed_at && (
                         <span>
                           Completed: {new Date(sync.completed_at).toLocaleString()}
@@ -124,6 +135,11 @@ export function SyncStatus({ syncHistory, onRefresh }) {
                       {sync.songs_synced !== undefined && (
                         <span>
                           Songs: {sync.songs_synced}/{sync.total_songs}
+                          {sync.sync_type === 'selective' && sync.selected_songs_count && (
+                            <span className="text-purple-600 ml-1">
+                              ({sync.selected_songs_count} selected)
+                            </span>
+                          )}
                         </span>
                       )}
                     </div>

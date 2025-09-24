@@ -204,6 +204,8 @@ export const createSyncHistory = async (syncData) => {
     total_songs: syncData.total_songs || 0,
     songs_synced: 0,
     songs_failed: 0,
+    sync_type: syncData.sync_type || 'full', // 'full' or 'selective'
+    selected_songs_count: syncData.selected_songs_count || null,
     started_at: new Date(),
     completed_at: null,
     error_message: null,

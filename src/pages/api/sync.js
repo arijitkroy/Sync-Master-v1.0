@@ -16,7 +16,7 @@ async function handler(req, res) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const { playlistId } = req.body;
+    const { playlistId, selectedSongIds } = req.body;
 
     if (!playlistId) {
       return res.status(400).json({ message: 'Playlist ID is required' });
@@ -60,6 +60,11 @@ async function handler(req, res) {
     const youtubeAPI = new YouTubeMusicAPI(youtubeCredentials);
     await youtubeAPI.authenticateWithToken(youtubeCredentials);
 
+    // Determine total songs for sync history
+    const totalSongsToSync = selectedSongIds && selectedSongIds.length > 0 
+      ? selectedSongIds.length 
+      : spotifyPlaylist.tracks_total;
+    
     // Create sync history entry
     const syncHistory = await createSyncHistory({
       user_id: session.userId,
@@ -69,7 +74,9 @@ async function handler(req, res) {
       spotify_playlist_name: spotifyPlaylist.name,
       youtube_playlist_name: null,
       status: 'in_progress',
-      total_songs: spotifyPlaylist.tracks_total,
+      total_songs: totalSongsToSync,
+      sync_type: selectedSongIds && selectedSongIds.length > 0 ? 'selective' : 'full',
+      selected_songs_count: selectedSongIds ? selectedSongIds.length : null,
     });
 
     try {
@@ -79,7 +86,8 @@ async function handler(req, res) {
         youtubeAPI,
         spotifyPlaylist,
         session.userId,
-        syncHistory.id
+        syncHistory.id,
+        selectedSongIds
       );
 
       // Update sync history with results

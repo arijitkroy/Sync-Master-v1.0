@@ -1,12 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { useState } from "react";
-import { Music, Users, Clock, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
+import { Music, Users, RefreshCw, CheckCircle, AlertCircle, Heart, List } from "lucide-react";
+import { SongSelector } from "./song-selector";
 
-export function PlaylistList({ playlists, onSync, onPlaylistSelect, selectedPlaylists, isLoading }) {
+export function PlaylistList({ playlists, onSync, isLoading }) {
   const [syncingPlaylists, setSyncingPlaylists] = useState(new Set());
   const [checkingPlaylists, setCheckingPlaylists] = useState(new Set());
   const [syncStatus, setSyncStatus] = useState(new Map());
+  const [showSongSelector, setShowSongSelector] = useState(null);
 
   const checkSyncStatus = async (playlistId) => {
     setCheckingPlaylists(prev => new Set(prev).add(playlistId));
@@ -59,10 +61,10 @@ export function PlaylistList({ playlists, onSync, onPlaylistSelect, selectedPlay
     }
   };
 
-  const handleSync = async (playlistId) => {
+  const handleSync = async (playlistId, selectedSongIds = null) => {
     setSyncingPlaylists(prev => new Set(prev).add(playlistId));
     try {
-      await onSync(playlistId);
+      await onSync(playlistId, selectedSongIds);
       // Clear sync status after successful sync
       setSyncStatus(prev => {
         const newMap = new Map(prev);
@@ -78,8 +80,8 @@ export function PlaylistList({ playlists, onSync, onPlaylistSelect, selectedPlay
     }
   };
 
-  const handleToggleSelect = (playlistId) => {
-    onPlaylistSelect(playlistId);
+  const handleSelectSongs = (playlist) => {
+    setShowSongSelector(playlist);
   };
 
   if (isLoading) {
@@ -111,7 +113,6 @@ export function PlaylistList({ playlists, onSync, onPlaylistSelect, selectedPlay
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {playlists.map((playlist) => {
-        const isSelected = selectedPlaylists.has(playlist.id);
         const isSyncing = syncingPlaylists.has(playlist.id);
         const isChecking = checkingPlaylists.has(playlist.id);
         const status = syncStatus.get(playlist.id);
@@ -123,29 +124,56 @@ export function PlaylistList({ playlists, onSync, onPlaylistSelect, selectedPlay
             : playlist.tracks?.total || 0;
         const ownerName = playlist.owner?.display_name || playlist.owner_name || 'Unknown';
         const lastUpdated = playlist.updated_at || playlist.created_at;
+        const isLikedSongs = playlist.id === 'liked_songs';
+        const hasManySongs = trackCount >= 20;
+        
+        // Format date safely
+        const formatDate = (dateValue) => {
+          if (!dateValue) return 'Unknown';
+          
+          try {
+            // Handle Firestore Timestamp objects
+            if (dateValue && typeof dateValue === 'object' && dateValue._seconds) {
+              const date = new Date(dateValue._seconds * 1000);
+              return date.toLocaleDateString();
+            }
+            
+            // Handle regular date strings/objects
+            const date = new Date(dateValue);
+            if (isNaN(date.getTime())) {
+              return 'Unknown';
+            }
+            return date.toLocaleDateString();
+          } catch (error) {
+            console.error('Error formatting date:', error);
+            return 'Unknown';
+          }
+        };
 
         return (
           <Card 
             key={playlist.id} 
-            className={`playlist-card cursor-pointer transition-all ${
-              isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-            }`}
-            onClick={() => handleToggleSelect(playlist.id)}
+            className="playlist-card transition-all"
           >
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <CardTitle className="text-lg leading-6 truncate text-white neon-text-subtle">
+                  <CardTitle className="text-lg leading-6 truncate text-white neon-text-subtle flex items-center gap-2">
+                    {isLikedSongs && <Heart className="w-5 h-5 text-red-400 fill-current" />}
                     {playlist.name}
                   </CardTitle>
                 </div>
-                {imageUrl && (
+                {imageUrl ? (
                   <img
                     src={imageUrl}
                     alt={playlist.name}
                     className="w-12 h-12 rounded-lg object-cover ml-3 flex-shrink-0"
                   />
-                )}
+                ) : isLikedSongs ? (
+                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-lg flex items-center justify-center ml-3 flex-shrink-0">
+                    <Heart className="w-6 h-6 text-white fill-current" />
+                  </div>
+                ) : null}
               </div>
             </CardHeader>
             <CardContent className="pt-0">
@@ -157,12 +185,6 @@ export function PlaylistList({ playlists, onSync, onPlaylistSelect, selectedPlay
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4 text-cyan-400" />
                   <span className="truncate">{ownerName}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4 text-cyan-400" />
-                  <span>
-                    {new Date(lastUpdated || playlist.added_at || Date.now()).toLocaleDateString()}
-                  </span>
                 </div>
               </div>
               
@@ -192,32 +214,57 @@ export function PlaylistList({ playlists, onSync, onPlaylistSelect, selectedPlay
               <div className="flex gap-2">
                 <Button
                   size="sm"
-                  variant={isSelected ? "default" : "outline"}
-                  className="flex-1"
+                  variant="outline"
+                  className="flex items-center gap-1 glass-surface border-purple-400/30 text-purple-300 hover:bg-purple-400/10"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleToggleSelect(playlist.id);
-                  }}
-                >
-                  {isSelected ? "Selected" : "Select"}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="flex-1 sync-button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    checkSyncStatus(playlist.id);
+                    handleSelectSongs(playlist);
                   }}
                   disabled={isSyncing || isChecking}
                 >
-                  {isSyncing ? "Syncing..." : isChecking ? "Checking..." : "Smart Sync"}
+                  <List className="w-3 h-3" />
+                  Select Songs
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className={`${hasManySongs ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'sync-button'} flex-1`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!hasManySongs) {
+                      checkSyncStatus(playlist.id);
+                    }
+                  }}
+                  disabled={isSyncing || isChecking || hasManySongs}
+                  title={hasManySongs ? `This playlist has ${trackCount} songs. Use "Select Songs" to choose specific tracks.` : ''}
+                >
+                  {hasManySongs 
+                    ? `Too Many Songs`
+                    : isSyncing 
+                    ? "Syncing..." 
+                    : isChecking 
+                    ? "Checking..." 
+                    : isLikedSongs 
+                    ? "Sync All" 
+                    : "Smart Sync"
+                  }
                 </Button>
               </div>
             </CardContent>
           </Card>
         );
       })}
+      
+      {/* Song Selector Modal */}
+      {showSongSelector && (
+        <SongSelector
+          playlistId={showSongSelector.id}
+          playlistName={showSongSelector.name}
+          onClose={() => setShowSongSelector(null)}
+          onSync={handleSync}
+        />
+      )}
     </div>
   );
 }

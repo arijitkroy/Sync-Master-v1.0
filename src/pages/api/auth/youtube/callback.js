@@ -78,26 +78,34 @@ async function handler(req, res) {
     const profile = profileResponse.data.items[0];
     const youtubeId = profile.id;
 
-    // Check if user exists, create if not
-    let user = await getUserByYouTubeId(youtubeId);
-    if (!user) {
-      // Try to use currently authenticated session user
-      user = session?.userId ? await getUserById(session.userId) : null;
+    // Check if user exists, prioritize current session user
+    let user = null;
+    
+    // First, try to use the currently authenticated session user (Spotify user)
+    if (session?.userId) {
+      user = await getUserById(session.userId);
       if (user) {
-        // Update existing user with YouTube ID
+        // Update existing Spotify user with YouTube ID
         const { updateUser } = await import('../../../../lib/database.js');
         await updateUser(user.id, {
-          ...user,
           youtube_id: youtubeId,
+          display_name: user.display_name || profile.snippet.title,
         });
         user.youtube_id = youtubeId;
-      } else {
-        // Create new user
-        user = await createUser({
-          youtube_id: youtubeId,
-          display_name: profile.snippet.title,
-        });
       }
+    }
+    
+    // If no session user, check if YouTube user already exists
+    if (!user) {
+      user = await getUserByYouTubeId(youtubeId);
+    }
+    
+    // If still no user, create new one (this should not happen with enforced workflow)
+    if (!user) {
+      user = await createUser({
+        youtube_id: youtubeId,
+        display_name: profile.snippet.title,
+      });
     }
 
     const existingToken = await getAuthToken(user.id, 'youtube');

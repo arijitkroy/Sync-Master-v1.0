@@ -44,7 +44,49 @@ async function handler(req, res) {
     }
     const spotifyPlaylists = spotifyResponse.items || [];
 
-    // Save playlists to database
+    // Get user's saved tracks count for "Liked Songs"
+    let likedSongsCount = 0;
+    try {
+      const savedTracksResponse = await spotify.getUserSavedTracks(1, 0);
+      likedSongsCount = savedTracksResponse.total || 0;
+    } catch (error) {
+      console.error('Error fetching saved tracks count:', error);
+      
+      // Check if it's a scope issue
+      if (error.response?.status === 403 && 
+          error.response?.data?.error?.message === 'Insufficient client scope') {
+        console.warn('Missing user-library-read scope for accessing saved tracks');
+        // Return error to prompt re-authentication
+        return res.status(401).json({
+          message: 'Please reconnect your Spotify account to access Liked Songs. The app needs additional permissions.',
+          requiresReauth: true,
+          missingScope: 'user-library-read'
+        });
+      }
+      
+      // For other errors, set count to 0 but still create the playlist
+      likedSongsCount = 0;
+    }
+
+    // Create "Liked Songs" virtual playlist
+    const likedSongsPlaylist = {
+      id: 'liked_songs',
+      name: 'Liked Songs',
+      description: 'Your saved tracks from Spotify',
+      external_url: 'https://open.spotify.com/collection/tracks',
+      image_url: null, // Spotify doesn't provide an image for liked songs
+      is_public: false,
+      is_collaborative: false,
+      owner_id: session.userId,
+      owner_name: 'You',
+      tracks_total: likedSongsCount,
+      snapshot_id: null,
+    };
+
+    // Save "Liked Songs" as a special playlist
+    await saveSpotifyPlaylist(session.userId, likedSongsPlaylist);
+
+    // Save regular playlists to database
     for (const playlist of spotifyPlaylists) {
       await saveSpotifyPlaylist(session.userId, {
         id: playlist.id,
