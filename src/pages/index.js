@@ -5,7 +5,7 @@ import { PlaylistList } from '../components/playlists/playlist-list.js';
 import { SyncStatus } from '../components/sync/sync-status.js';
 import { Button } from '../components/ui/button.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card.js';
-import { Music, Settings, LogOut, RefreshCw } from 'lucide-react';
+import { Settings, LogOut, RefreshCw } from 'lucide-react';
 
 export default function Home() {
   const [user, setUser] = useState(null);
