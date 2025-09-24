@@ -1,115 +1,330 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { useState, useEffect } from 'react';
+import { SpotifyAuth } from '../components/auth/spotify-auth.js';
+import { YouTubeAuth } from '../components/auth/youtube-auth.js';
+import { PlaylistList } from '../components/playlists/playlist-list.js';
+import { SyncStatus } from '../components/sync/sync-status.js';
+import { Button } from '../components/ui/button.js';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card.js';
+import { Music, Settings, LogOut, RefreshCw } from 'lucide-react';
 
 export default function Home() {
-  return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/pages/index.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const [user, setUser] = useState(null);
+  const [spotifyConnected, setSpotifyConnected] = useState(false);
+  const [youtubeConnected, setYoutubeConnected] = useState(false);
+  const [playlists, setPlaylists] = useState([]);
+  const [playlistsLoading, setPlaylistsLoading] = useState(true);
+  const [syncHistory, setSyncHistory] = useState([]);
+  const [selectedPlaylists, setSelectedPlaylists] = useState(new Set());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    checkAuthStatus();
+    loadPlaylists();
+    loadSyncHistory();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch('/api/auth/status');
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        setSpotifyConnected(data.spotifyConnected);
+        setYoutubeConnected(data.youtubeConnected);
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadPlaylists = async () => {
+    setPlaylistsLoading(true);
+    try {
+      const response = await fetch('/api/playlists/spotify');
+      if (response.ok) {
+        const data = await response.json();
+        setPlaylists(data.playlists);
+      }
+    } catch (error) {
+      console.error('Error loading playlists:', error);
+    }
+    setPlaylistsLoading(false);
+  };
+
+  const loadSyncHistory = async () => {
+    try {
+      const response = await fetch('/api/sync/history');
+      if (response.ok) {
+        const data = await response.json();
+        setSyncHistory(data.history);
+      }
+    } catch (error) {
+      console.error('Error loading sync history:', error);
+    }
+  };
+
+  const handleSync = async (playlistId) => {
+    try {
+      setError(null);
+      const response = await fetch('/api/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ playlistId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Sync failed');
+      }
+
+      const result = await response.json();
+      alert(`Sync completed! ${result.result.songsSynced} songs synced.`);
+
+      // Refresh data
+      loadPlaylists();
+      loadSyncHistory();
+
+    } catch (error) {
+      console.error('Error syncing playlist:', error);
+      setError(error.message);
+    }
+  };
+
+  const handlePlaylistSelect = (playlistId) => {
+    setSelectedPlaylists(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(playlistId)) {
+        newSet.delete(playlistId);
+      } else {
+        newSet.add(playlistId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleBulkSync = async () => {
+    if (selectedPlaylists.size === 0) {
+      alert('Please select at least one playlist to sync');
+      return;
+    }
+
+    try {
+      setError(null);
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const playlistId of selectedPlaylists) {
+        try {
+          await handleSync(playlistId);
+          successCount++;
+        } catch (error) {
+          console.error(`Error syncing playlist ${playlistId}:`, error);
+          errorCount++;
+        }
+      }
+
+      alert(`Bulk sync completed! ${successCount} successful, ${errorCount} failed.`);
+      setSelectedPlaylists(new Set());
+
+    } catch (error) {
+      console.error('Error in bulk sync:', error);
+      setError('Bulk sync failed: ' + error.message);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout-all', { method: 'POST' });
+      window.location.reload();
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center glass-surface p-8 rounded-2xl neon-border">
+          <div className="w-12 h-12 mx-auto mb-4 relative">
+            <div className="w-12 h-12 border-4 border-cyan-400/20 border-t-cyan-400 rounded-full animate-spin"></div>
+          </div>
+          <p className="text-lg text-white neon-text-subtle">Loading Sync Master...</p>
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen">
+      {/* Header */}
+      <header className="header-glass sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 neon-gradient-bg rounded-full flex items-center justify-center p-1">
+                <img 
+                  src="/favicon.ico" 
+                  alt="Sync Master Logo" 
+                  className="w-10 h-10 object-contain rounded-full"
+                />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white neon-text-subtle">Sync Master</h1>
+                <p className="text-sm text-cyan-300">Spotify → YouTube Music</p>
+              </div>
+            </div>
+
+            {user && (
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-300">
+                  Welcome, <span className="text-cyan-300 font-medium">{user.display_name}</span>
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 glass-surface border-cyan-400/30 text-cyan-300 hover:bg-cyan-400/10 hover:border-cyan-400/50 hover:text-cyan-400"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {spotifyConnected && youtubeConnected && (
+          <div className="mb-6 p-4 warning-neon rounded-lg text-sm">
+            <span className="font-semibold">⚠️ Warning:</span> Avoid refreshing this page while a sync is in progress. Doing so may interrupt the process and consume additional API quota.
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 p-4 error-neon rounded-lg">
+            <p className="font-medium">{error}</p>
+          </div>
+        )}
+
+        {/* Authentication Section */}
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-white mb-8 text-center neon-text-subtle">Connect Your Accounts</h2>
+          <div className="flex justify-center">
+            <div className="grid gap-8 md:grid-cols-2 max-w-4xl w-full">
+              <div className="flex justify-center">
+                <SpotifyAuth
+                  isConnected={spotifyConnected}
+                  onAuthSuccess={() => {
+                    setSpotifyConnected(true);
+                    loadPlaylists();
+                  }}
+                />
+              </div>
+              <div className="flex justify-center">
+                <YouTubeAuth
+                  isConnected={youtubeConnected}
+                  spotifyConnected={spotifyConnected}
+                  onAuthSuccess={() => {
+                    setYoutubeConnected(true);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        {spotifyConnected && youtubeConnected && (
+          <div className="space-y-8">
+            {/* Quick Actions */}
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+              <h2 className="text-3xl font-bold text-white neon-text-subtle">Your Playlists</h2>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={loadPlaylists}
+                  className="flex items-center gap-2 glass-surface border-cyan-400/30 text-cyan-300 hover:bg-cyan-400/10 hover:border-cyan-400/50 hover:text-cyan-400"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Refresh
+                </Button>
+                {selectedPlaylists.size > 0 && (
+                  <Button
+                    onClick={handleBulkSync}
+                    className="sync-button text-black font-semibold px-6"
+                  >
+                    Sync Selected ({selectedPlaylists.size})
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Playlist List */}
+            <PlaylistList
+              playlists={playlists}
+              onSync={handleSync}
+              onPlaylistSelect={handlePlaylistSelect}
+              selectedPlaylists={selectedPlaylists}
+              isLoading={playlistsLoading}
+            />
+
+            {/* Sync History */}
+            <SyncStatus
+              syncHistory={syncHistory}
+              onRefresh={loadSyncHistory}
+            />
+          </div>
+        )}
+
+        {/* Getting Started Guide */}
+        {(!spotifyConnected || !youtubeConnected) && (
+          <Card className="max-w-4xl mx-auto mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Getting Started
+              </CardTitle>
+              <CardDescription>
+                Follow these steps to start syncing your playlists
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ol className="space-y-3 text-gray-600">
+                <li className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium">
+                    1
+                  </span>
+                  <div>
+                    <strong>Connect Spotify</strong> - Authorize access to your Spotify playlists
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-medium">
+                    2
+                  </span>
+                  <div>
+                    <strong>Connect YouTube Music</strong> - Authorize access to create and manage playlists
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+                    3
+                  </span>
+                  <div>
+                    <strong>Select & Sync</strong> - Choose your playlists and start the synchronization
+                  </div>
+                </li>
+              </ol>
+            </CardContent>
+          </Card>
+        )}
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }

@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Admin rules - allow full access for server-side operations
+    // This is used when the Firebase Admin SDK is used with service account credentials
+    
+    // All collections - full access for admin operations
+    match /{document=**} {
+      allow read, write: if request.auth != null && 
+        request.auth.token.admin == true;
+    }
+    
+    // For server-side operations without user authentication
+    // (when using Firebase Admin SDK with service account)
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+    
+    match /auth_tokens/{tokenId} {
+      allow read, write: if true;
+    }
+    
+    match /spotify_playlists/{playlistId} {
+      allow read, write: if true;
+    }
+    
+    match /youtube_playlists/{playlistId} {
+      allow read, write: if true;
+    }
+    
+    match /song_mappings/{mappingId} {
+      allow read, write: if true;
+    }
+    
+    match /sync_history/{syncId} {
+      allow read, write: if true;
+    }
+  }
+}

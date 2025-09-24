@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users collection - users can only read/write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Auth tokens collection - users can only access their own tokens
+    match /auth_tokens/{tokenId} {
+      allow read, write: if request.auth != null && 
+        resource.data.user_id == request.auth.uid;
+      allow create: if request.auth != null && 
+        request.resource.data.user_id == request.auth.uid;
+    }
+    
+    // Spotify playlists collection - users can only access their own playlists
+    match /spotify_playlists/{playlistId} {
+      allow read, write: if request.auth != null && 
+        resource.data.user_id == request.auth.uid;
+      allow create: if request.auth != null && 
+        request.resource.data.user_id == request.auth.uid;
+    }
+    
+    // YouTube playlists collection - users can only access their own playlists
+    match /youtube_playlists/{playlistId} {
+      allow read, write: if request.auth != null && 
+        resource.data.user_id == request.auth.uid;
+      allow create: if request.auth != null && 
+        request.resource.data.user_id == request.auth.uid;
+    }
+    
+    // Song mappings collection - users can only access mappings for their playlists
+    match /song_mappings/{mappingId} {
+      allow read, write: if request.auth != null;
+      allow create: if request.auth != null;
+      // Note: We allow broader access here since mappings are tied to playlists
+      // and checking playlist ownership would require additional reads
+    }
+    
+    // Sync history collection - users can only access their own sync history
+    match /sync_history/{syncId} {
+      allow read, write: if request.auth != null && 
+        resource.data.user_id == request.auth.uid;
+      allow create: if request.auth != null && 
+        request.resource.data.user_id == request.auth.uid;
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,64 @@
+[debug] [2025-09-24T18:48:23.880Z] ----------------------------------------------------------------------
+[debug] [2025-09-24T18:48:23.882Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\ariji\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init hosting
+[debug] [2025-09-24T18:48:23.883Z] CLI Version:   14.16.0
+[debug] [2025-09-24T18:48:23.883Z] Platform:      win32
+[debug] [2025-09-24T18:48:23.883Z] Node Version:  v22.12.0
+[debug] [2025-09-24T18:48:23.883Z] Time:          Thu Sep 25 2025 00:18:23 GMT+0530 (India Standard Time)
+[debug] [2025-09-24T18:48:23.883Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-09-24T18:48:24.057Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-09-24T18:48:24.058Z] > authorizing via signed-in user (arijitkroy16@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  D:\NEXT-JS\sync_master
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2025-09-24T18:48:28.759Z] Using project from CLI flag: sync-master-v1
+[debug] [2025-09-24T18:48:28.760Z] Checked if tokens are valid: true, expires at: 1758743113076
+[debug] [2025-09-24T18:48:28.760Z] Checked if tokens are valid: true, expires at: 1758743113076
+[debug] [2025-09-24T18:48:28.761Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/sync-master-v1 [none]
+[debug] [2025-09-24T18:48:29.291Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/sync-master-v1 200
+[debug] [2025-09-24T18:48:29.291Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/sync-master-v1 {"projectId":"sync-master-v1","projectNumber":"306169842053","displayName":"SyncMaster","name":"projects/sync-master-v1","resources":{"hostingSite":"sync-master-v1"},"state":"ACTIVE","etag":"1_9595d391-d1a5-4bf3-a046-7195d7c1aa93"}
+[info] i  Using project sync-master-v1 (SyncMaster) 
+[info] 
+=== Hosting Setup
+[debug] [2025-09-24T18:48:29.549Z] Checked if tokens are valid: true, expires at: 1758743113076
+[debug] [2025-09-24T18:48:29.549Z] Checked if tokens are valid: true, expires at: 1758743113076
+[debug] [2025-09-24T18:48:29.549Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/sync-master-v1 [none]
+[debug] [2025-09-24T18:48:29.979Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/sync-master-v1 200
+[debug] [2025-09-24T18:48:29.979Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/sync-master-v1 {"projectId":"sync-master-v1","projectNumber":"306169842053","displayName":"SyncMaster","name":"projects/sync-master-v1","resources":{"hostingSite":"sync-master-v1"},"state":"ACTIVE","etag":"1_9595d391-d1a5-4bf3-a046-7195d7c1aa93"}
+[info] 
+[info] Your public directory is the folder (relative to your project directory) that
+[info] will contain Hosting assets to be uploaded with firebase deploy. If you
+[info] have a build process for your assets, use your build's output directory.
+[info] 
+[debug] [2025-09-24T18:48:52.560Z] ExitPromptError: User force closed the prompt with SIGINT
+    at Interface.sigint (C:\Users\ariji\AppData\Roaming\npm\node_modules\firebase-tools\node_modules\@inquirer\core\dist\commonjs\lib\create-prompt.js:101:37)
+    at Interface.emit (node:events:524:28)
+    at Interface.emit (node:domain:489:12)
+    at [_ttyWrite] [as _ttyWrite] (node:internal/readline/interface:1124:18)
+    at ReadStream.onkeypress (node:internal/readline/interface:263:20)
+    at ReadStream.emit (node:events:536:35)
+    at ReadStream.emit (node:domain:489:12)
+    at emitKeys (node:internal/readline/utils:370:14)
+    at emitKeys.next (<anonymous>)
+    at ReadStream.onData (node:internal/readline/emitKeypressEvents:64:36)
+[error] 
+[error] Error: An unexpected error has occurred.
