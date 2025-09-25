@@ -62,23 +62,36 @@ Sync Master is a modern web application that bridges the gap between Spotify and
 3. **Environment Setup**
    Create a `.env.local` file in the root directory:
    ```env
-   # Spotify API Configuration
-   SPOTIFY_CLIENT_ID=your_spotify_client_id
-   SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
-   SPOTIFY_REDIRECT_URI=http://localhost:3000/api/auth/spotify/callback
+   # Spotify API Setup -- https://developer.spotify.com
+   SPOTIFY_CLIENT_ID=
+   SPOTIFY_CLIENT_SECRET=
+   SPOTIFY_REDIRECT_URI=
 
-   # YouTube API Configuration
-   YOUTUBE_CLIENT_ID=your_youtube_client_id
-   YOUTUBE_CLIENT_SECRET=your_youtube_client_secret
-   YOUTUBE_REDIRECT_URI=http://localhost:3000/api/auth/youtube/callback
+   # YouTube API v3 Setup -- https://console.cloud.google.com/apis/dashboard
+   YOUTUBE_CLIENT_ID=
+   YOUTUBE_CLIENT_SECRET=
+   YOUTUBE_REDIRECT_URI=
 
-   # Firebase Configuration
-   FIREBASE_PROJECT_ID=your_firebase_project_id
-   FIREBASE_PRIVATE_KEY=your_firebase_private_key
-   FIREBASE_CLIENT_EMAIL=your_firebase_client_email
+   # Random 32 characters String
+   SESSION_PASSWORD=
 
-   # Session Configuration
-   SESSION_SECRET=your_secure_session_secret
+   # Optional
+   NEXTAUTH_URL=
+   NEXTAUTH_SECRET=
+
+   # Firebase Initialization
+   FIREBASE_API_KEY=
+   FIREBASE_AUTH_DOMAIN=
+   FIREBASE_PROJECT_ID=
+   FIREBASE_STORAGE_BUCKET=
+   FIREBASE_MESSAGING_SENDER_ID=
+   FIREBASE_APP_ID=
+
+   # FIrebase-Admin / Service Account Initialization
+   FIREBASE_PRIVATE_KEY_ID=
+   FIREBASE_PRIVATE_KEY=
+   FIREBASE_CLIENT_EMAIL=
+   FIREBASE_CLIENT_ID=
    ```
 
 4. **Start the development server**
