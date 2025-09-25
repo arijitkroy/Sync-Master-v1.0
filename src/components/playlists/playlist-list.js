@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { useState } from "react";
-import { Music, Users, RefreshCw, CheckCircle, AlertCircle, Heart, List } from "lucide-react";
+import { Music, Users, RefreshCw, CheckCircle, Clock, AlertCircle, Heart, List } from "lucide-react";
 import { SongSelector } from "./song-selector";
 
 export function PlaylistList({ playlists, onSync, isLoading }) {
@@ -111,7 +111,7 @@ export function PlaylistList({ playlists, onSync, isLoading }) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
       {playlists.map((playlist) => {
         const isSyncing = syncingPlaylists.has(playlist.id);
         const isChecking = checkingPlaylists.has(playlist.id);
@@ -130,17 +130,10 @@ export function PlaylistList({ playlists, onSync, isLoading }) {
         // Format date safely
         const formatDate = (dateValue) => {
           if (!dateValue) return 'Unknown';
-          
+
           try {
-            // Handle Firestore Timestamp objects
-            if (dateValue && typeof dateValue === 'object' && dateValue._seconds) {
-              const date = new Date(dateValue._seconds * 1000);
-              return date.toLocaleDateString();
-            }
-            
-            // Handle regular date strings/objects
-            const date = new Date(dateValue);
-            if (isNaN(date.getTime())) {
+            const date = new Date(typeof dateValue === 'object' && dateValue._seconds ? dateValue._seconds * 1000 : dateValue);
+            if (Number.isNaN(date.getTime())) {
               return 'Unknown';
             }
             return date.toLocaleDateString();
@@ -153,48 +146,58 @@ export function PlaylistList({ playlists, onSync, isLoading }) {
         return (
           <Card 
             key={playlist.id} 
-            className="playlist-card transition-all"
+            className="playlist-card transition-all h-full flex flex-col"
           >
             <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
+              <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <CardTitle className="text-lg leading-6 truncate text-white neon-text-subtle flex items-center gap-2">
+                  <CardTitle className="text-lg leading-6 text-white neon-text-subtle flex items-center gap-2">
                     {isLikedSongs && <Heart className="w-5 h-5 text-red-400 fill-current" />}
-                    {playlist.name}
+                    <span className="truncate">
+                      {playlist.name}
+                    </span>
                   </CardTitle>
                 </div>
                 {imageUrl ? (
                   <img
                     src={imageUrl}
                     alt={playlist.name}
-                    className="w-12 h-12 rounded-lg object-cover ml-3 flex-shrink-0"
+                    className="w-16 h-16 md:w-12 md:h-12 rounded-lg object-cover flex-shrink-0"
                   />
                 ) : isLikedSongs ? (
-                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-lg flex items-center justify-center ml-3 flex-shrink-0">
-                    <Heart className="w-6 h-6 text-white fill-current" />
+                  <div className="w-16 h-16 md:w-12 md:h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Heart className="w-7 h-7 md:w-6 md:h-6 text-white fill-current" />
                   </div>
                 ) : null}
               </div>
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="flex items-center gap-4 text-sm text-gray-400 mb-4">
+            <CardContent className="pt-0 flex-1 flex flex-col">
+              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400 mb-4">
                 <div className="flex items-center gap-1">
                   <Music className="w-4 h-4 text-cyan-400" />
                   <span>{trackCount} song{trackCount === 1 ? '' : 's'}</span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 min-w-0">
                   <Users className="w-4 h-4 text-cyan-400" />
-                  <span className="truncate">{ownerName}</span>
+                  <span className="truncate max-w-[200px] md:max-w-none">{ownerName}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Clock className="w-4 h-4 text-cyan-400" />
+                  <span>
+                    {formatDate(lastUpdated || playlist.added_at)}
+                  </span>
                 </div>
               </div>
               
               {/* Sync Status Indicator */}
               {status && (
-                <div className="mb-3 p-2 rounded-md text-xs flex items-center gap-2" 
-                     style={{
-                       backgroundColor: status.isUpToDate ? 'rgba(34, 197, 94, 0.1)' : 'rgba(251, 191, 36, 0.1)',
-                       border: `1px solid ${status.isUpToDate ? 'rgba(34, 197, 94, 0.3)' : 'rgba(251, 191, 36, 0.3)'}`
-                     }}>
+                <div
+                  className="mb-3 p-2 rounded-md text-xs flex items-center gap-2"
+                  style={{
+                    backgroundColor: status.isUpToDate ? 'rgba(34, 197, 94, 0.1)' : 'rgba(251, 191, 36, 0.1)',
+                    border: `1px solid ${status.isUpToDate ? 'rgba(34, 197, 94, 0.3)' : 'rgba(251, 191, 36, 0.3)'}`
+                  }}
+                >
                   {status.isUpToDate ? (
                     <>
                       <CheckCircle className="w-3 h-3 text-green-500" />
@@ -211,11 +214,11 @@ export function PlaylistList({ playlists, onSync, isLoading }) {
                 </div>
               )}
               
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 mt-auto">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="flex items-center gap-1 glass-surface border-purple-400/30 text-purple-300 hover:bg-purple-400/10"
+                  className="flex items-center justify-center gap-1 glass-surface border-purple-400/30 text-purple-300 hover:bg-purple-400/10"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleSelectSongs(playlist);

@@ -79,11 +79,11 @@ export function SongSelector({ playlistId, playlistName, onClose, onSync }) {
   const filteredSongs = getFilteredSongs();
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] glass-surface neon-border flex flex-col">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start md:items-center justify-center z-50 p-0 md:p-4 overflow-y-auto">
+      <Card className="w-full h-full md:h-auto md:max-h-[90vh] max-w-4xl glass-surface neon-border flex flex-col rounded-none md:rounded-2xl">
         <CardHeader className="flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-white flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="text-white flex items-center gap-2 text-lg sm:text-xl">
               <Heart className="w-5 h-5 text-red-400 fill-current" />
               Select Songs from {playlistName}
             </CardTitle>
@@ -91,7 +91,7 @@ export function SongSelector({ playlistId, playlistName, onClose, onSync }) {
               variant="outline"
               size="sm"
               onClick={onClose}
-              className="glass-surface border-gray-400/30 text-gray-300 hover:bg-gray-400/10"
+              className="glass-surface border-gray-400/30 text-gray-300 hover:bg-gray-400/10 self-start sm:self-auto"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -110,13 +110,13 @@ export function SongSelector({ playlistId, playlistName, onClose, onSync }) {
               />
             </div>
             
-            <div className="flex items-center justify-between">
-              <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={selectAll}
-                  className="glass-surface border-cyan-400/30 text-cyan-300 hover:bg-cyan-400/10"
+                  className="glass-surface border-cyan-400/30 text-cyan-300 hover:bg-cyan-400/10 w-full sm:w-auto"
                 >
                   Select All ({filteredSongs.length})
                 </Button>
@@ -124,13 +124,13 @@ export function SongSelector({ playlistId, playlistName, onClose, onSync }) {
                   size="sm"
                   variant="outline"
                   onClick={deselectAll}
-                  className="glass-surface border-gray-400/30 text-gray-300 hover:bg-gray-400/10"
+                  className="glass-surface border-gray-400/30 text-gray-300 hover:bg-gray-400/10 w-full sm:w-auto"
                 >
                   Deselect All
                 </Button>
               </div>
               
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-gray-400 sm:text-right">
                 {selectedSongs.size} of {songs.length} songs selected
               </div>
             </div>
@@ -147,7 +147,7 @@ export function SongSelector({ playlistId, playlistName, onClose, onSync }) {
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+              <div className="flex-1 overflow-y-auto space-y-2 pr-0 sm:pr-2">
                 {filteredSongs.map((song, index) => {
                   const track = song.track;
                   const isSelected = selectedSongs.has(track.id);
@@ -203,18 +203,18 @@ export function SongSelector({ playlistId, playlistName, onClose, onSync }) {
               </div>
               
               <div className="flex-shrink-0 pt-4 border-t border-gray-400/20">
-                <div className="flex gap-3 justify-end">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end">
                   <Button
                     variant="outline"
                     onClick={onClose}
-                    className="glass-surface border-gray-400/30 text-gray-300 hover:bg-gray-400/10"
+                    className="glass-surface border-gray-400/30 text-gray-300 hover:bg-gray-400/10 w-full sm:w-auto"
                   >
                     Cancel
                   </Button>
                   <Button
                     onClick={handleSync}
                     disabled={selectedSongs.size === 0 || syncing}
-                    className="sync-button text-black font-semibold"
+                    className="sync-button text-black font-semibold w-full sm:w-auto"
                   >
                     {syncing ? 'Syncing...' : `Sync ${selectedSongs.size} Songs`}
                   </Button>

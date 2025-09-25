@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SpotifyAuth } from '../components/auth/spotify-auth.js';
 import { YouTubeAuth } from '../components/auth/youtube-auth.js';
 import { PlaylistList } from '../components/playlists/playlist-list.js';
 import { SyncStatus } from '../components/sync/sync-status.js';
 import { Button } from '../components/ui/button.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card.js';
-import { Settings, LogOut, RefreshCw, Heart } from 'lucide-react';
+import { Settings, LogOut, RefreshCw, Heart, ChevronDown } from 'lucide-react';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -16,11 +16,36 @@ export default function Home() {
   const [syncHistory, setSyncHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isUnauthorized, setIsUnauthorized] = useState(false);
+  const profileMenuRef = useRef(null);
 
   useEffect(() => {
     checkAuthStatus();
     loadPlaylists();
     loadSyncHistory();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, []);
 
   const checkAuthStatus = async () => {
@@ -43,25 +68,36 @@ export default function Home() {
     setPlaylistsLoading(true);
     try {
       const response = await fetch('/api/playlists/spotify');
+      if (response.status === 401) {
+        setIsUnauthorized(true);
+        setError(null);
+        setPlaylists([]);
+        return;
+      }
+
+      const data = await response.json();
+
       if (response.ok) {
-        const data = await response.json();
         setPlaylists(data.playlists);
+        setError(null);
+        setIsUnauthorized(false);
       } else {
-        const errorData = await response.json();
-        
         // Handle scope issues specifically
-        if (errorData.requiresReauth && errorData.missingScope) {
-          setError(`${errorData.message} Missing permission: ${errorData.missingScope}`);
+        if (data.requiresReauth && data.missingScope) {
+          setError(`${data.message} Missing permission: ${data.missingScope}`);
           // Optionally disconnect Spotify to force re-auth
           setSpotifyConnected(false);
         } else {
-          setError(errorData.message);
+          setError(data.message);
         }
+
+        setIsUnauthorized(false);
       }
     } catch (error) {
       console.error('Error loading playlists:', error);
+    } finally {
+      setPlaylistsLoading(false);
     }
-    setPlaylistsLoading(false);
   };
 
   const loadSyncHistory = async () => {
@@ -160,18 +196,41 @@ export default function Home() {
 
             {user && (
               <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-300">
-                  Welcome, <span className="text-cyan-300 font-medium">{user.display_name}</span>
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 glass-surface border-cyan-400/30 text-cyan-300 hover:bg-cyan-400/10 hover:border-cyan-400/50 hover:text-cyan-400"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Logout
-                </Button>
+                <div ref={profileMenuRef} className="relative">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowProfileMenu((prev) => !prev)}
+                    className="flex items-center gap-2 glass-surface border-cyan-400/30 text-cyan-300 hover:bg-cyan-400/10 hover:border-cyan-400/50 hover:text-cyan-400"
+                    aria-haspopup="true"
+                    aria-expanded={showProfileMenu}
+                  >
+                    <span className="truncate max-w-[120px] sm:max-w-none text-cyan-200">
+                      {user.display_name || 'Profile'}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showProfileMenu ? 'rotate-180' : 'rotate-0'}`} />
+                  </Button>
+
+                  {showProfileMenu && (
+                    <div className="absolute right-0 mt-2 w-44 rounded-lg border border-cyan-400/30 glass-surface shadow-lg backdrop-blur-md z-10">
+                      <div className="px-4 py-3 border-b border-cyan-400/20">
+                        <p className="text-xs text-gray-400">Signed in as</p>
+                        <p className="text-sm text-white truncate">{user.email || user.display_name}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          handleLogout();
+                        }}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-left text-cyan-200 hover:bg-cyan-400/10"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -314,6 +373,33 @@ export default function Home() {
           </Card>
         )}
       </main>
+
+      <footer className="mt-16 border-t border-cyan-400/10 bg-black/40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex flex-col gap-6 md:gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-3 text-center md:text-left">
+              <h3 className="text-lg font-semibold text-white">Sync Master</h3>
+              <p className="text-sm text-gray-400 max-w-xl mx-auto md:mx-0">
+                Seamlessly sync your Spotify playlists to YouTube Music with confidence.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-end gap-3 text-sm">
+              <a href="/terms.html" className="text-cyan-300 hover:text-cyan-200">
+                Terms & Conditions
+              </a>
+              <span className="hidden sm:block text-cyan-300/40">•</span>
+              <a href="/privacy.html" className="text-cyan-300 hover:text-cyan-200">
+                Privacy Policy
+              </a>
+            </div>
+          </div>
+
+          <p className="mt-6 text-xs text-gray-500 text-center md:text-left">
+            © {new Date().getFullYear()} Sync Master. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
