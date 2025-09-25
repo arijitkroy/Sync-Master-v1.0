@@ -62,23 +62,36 @@ Sync Master is a modern web application that bridges the gap between Spotify and
 3. **Environment Setup**
    Create a `.env.local` file in the root directory:
    ```env
-   # Spotify API Configuration
-   SPOTIFY_CLIENT_ID=your_spotify_client_id
-   SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
-   SPOTIFY_REDIRECT_URI=http://localhost:3000/api/auth/spotify/callback
+   # Spotify API Setup -- https://developer.spotify.com
+   SPOTIFY_CLIENT_ID=
+   SPOTIFY_CLIENT_SECRET=
+   SPOTIFY_REDIRECT_URI=
 
-   # YouTube API Configuration
-   YOUTUBE_CLIENT_ID=your_youtube_client_id
-   YOUTUBE_CLIENT_SECRET=your_youtube_client_secret
-   YOUTUBE_REDIRECT_URI=http://localhost:3000/api/auth/youtube/callback
+   # YouTube API v3 Setup -- https://console.cloud.google.com/apis/dashboard
+   YOUTUBE_CLIENT_ID=
+   YOUTUBE_CLIENT_SECRET=
+   YOUTUBE_REDIRECT_URI=
 
-   # Firebase Configuration
-   FIREBASE_PROJECT_ID=your_firebase_project_id
-   FIREBASE_PRIVATE_KEY=your_firebase_private_key
-   FIREBASE_CLIENT_EMAIL=your_firebase_client_email
+   # Random 32 characters String
+   SESSION_PASSWORD=
 
-   # Session Configuration
-   SESSION_SECRET=your_secure_session_secret
+   # Optional
+   NEXTAUTH_URL=
+   NEXTAUTH_SECRET=
+
+   # Firebase Initialization
+   FIREBASE_API_KEY=
+   FIREBASE_AUTH_DOMAIN=
+   FIREBASE_PROJECT_ID=
+   FIREBASE_STORAGE_BUCKET=
+   FIREBASE_MESSAGING_SENDER_ID=
+   FIREBASE_APP_ID=
+
+   # FIrebase-Admin / Service Account Initialization
+   FIREBASE_PRIVATE_KEY_ID=
+   FIREBASE_PRIVATE_KEY=
+   FIREBASE_CLIENT_EMAIL=
+   FIREBASE_CLIENT_ID=
    ```
 
 4. **Start the development server**
@@ -127,10 +140,6 @@ Sync Master is a modern web application that bridges the gap between Spotify and
 - **Spotify**: `playlist-read-private`, `playlist-modify-public`, `user-library-read`
 - **YouTube**: `youtube`, `youtube.readonly`, `youtubepartner`
 
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
 ### Development Workflow
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -141,7 +150,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 ## 📄 Legal & Privacy
 
 ### Privacy Policy
-Your privacy is important to us. Read our comprehensive [Privacy Policy](https://syncmaster.app/privacy) to understand how we collect, use, and protect your data.
+Your privacy is important to us. Read our comprehensive [Privacy Policy](https://sync-master-ultimate.vercel.app/privacy.html) to understand how we collect, use, and protect your data.
 
 **Key Points:**
 - We only access playlist and song data necessary for syncing
@@ -150,20 +159,13 @@ Your privacy is important to us. Read our comprehensive [Privacy Policy](https:/
 - You can delete your data at any time
 
 ### Terms of Service
-By using Sync Master, you agree to our [Terms of Service](https://syncmaster.app/terms).
+By using Sync Master, you agree to our [Terms of Service](https://sync-master-ultimate.vercel.app/terms.html).
 
 **Important Notes:**
 - Service is provided "as-is" without warranties
 - Users are responsible for complying with platform terms
 - We respect intellectual property rights
 - Service availability may vary
-
-## 📞 Support
-
-- **Documentation**: [docs.syncmaster.app](https://docs.syncmaster.app)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/sync-master/issues)
-- **Email**: support@syncmaster.app
-- **Discord**: [Join our community](https://discord.gg/syncmaster)
 
 ## 📊 Roadmap
 
@@ -189,8 +191,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**Made with ❤️ by the Sync Master Team**
+**Made with ❤️ by Arijit Kumar Roy**
 
-[Website](https://syncmaster.app) • [Privacy Policy](https://syncmaster.app/privacy) • [Terms of Service](https://syncmaster.app/terms)
+[Website](https://sync-master-ultimate.vercel.app) • [Privacy Policy](https://sync-master-ultimate.vercel.app/privacy.html) • [Terms of Service](https://sync-master-ultimate.vercel.app/terms.html)
 
 </div>
