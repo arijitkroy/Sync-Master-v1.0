@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "Sync_Master_Ultimate",
+      "package_name": "app.vercel.sync_master_ultimate.twa",
+      "sha256_cert_fingerprints": [
+        "50:4E:05:E1:6E:6A:D3:F7:6D:BF:4F:29:35:55:E1:F2:D7:5B:88:06:B4:E7:CD:41:A0:BA:0B:B5:1C:D6:19:E0"
+      ]
+    }
+  }
+]
