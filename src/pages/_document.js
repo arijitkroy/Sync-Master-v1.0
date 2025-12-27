@@ -7,6 +7,7 @@ export default function Document() {
       <body className="antialiased">
         <Main />
         <NextScript />
+        <script src="/sw-register.js" />
       </body>
     </Html>
   );
